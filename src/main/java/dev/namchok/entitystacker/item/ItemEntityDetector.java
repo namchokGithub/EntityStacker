@@ -3,6 +3,7 @@ package dev.namchok.entitystacker.item;
 import com.mojang.logging.LogUtils;
 import dev.namchok.entitystacker.config.ItemStackingConfig;
 import dev.namchok.entitystacker.item.service.ItemCompatibilityPolicy;
+import dev.namchok.entitystacker.item.service.ItemEntityEligibilityPolicy;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -27,6 +28,7 @@ public final class ItemEntityDetector
     private static final double DETECTION_RADIUS = 32.0D;
     private static final int MAX_ITEM_ENTITIES_PER_SCAN = 128;
     private static final int MAX_DETECTED_ITEM_LOG_MESSAGES_PER_SCAN = 10;
+    private static final int MAX_INELIGIBLE_ITEM_LOG_MESSAGES_PER_SCAN = 10;
     private static final int MAX_PAIR_LOG_MESSAGES_PER_SCAN = 10;
 
     private ItemEntityDetector()
@@ -42,6 +44,7 @@ public final class ItemEntityDetector
         Set<UUID> inspectedItemIds = new HashSet<>();
         List<ItemEntity> detectedItems = new ArrayList<>();
         int loggedItemCount = 0;
+        int loggedIneligibleItemCount = 0;
 
         playerLoop:
         for (ServerPlayer player : server.getPlayerList().getPlayers())
@@ -60,17 +63,31 @@ public final class ItemEntityDetector
                     continue;
                 }
 
+                ItemStack itemStack = itemEntity.getItem();
+                ItemEntityEligibilityPolicy.EligibilityResult eligibility =
+                        ItemEntityEligibilityPolicy.checkEligibility(itemEntity);
+                if (!eligibility.eligible())
+                {
+                    if (loggedIneligibleItemCount < MAX_INELIGIBLE_ITEM_LOG_MESSAGES_PER_SCAN)
+                    {
+                        LOGGER.info(
+                                "Skipped dropped item: reason={}, id={}, position=({}, {}, {})",
+                                eligibility.reason(),
+                                ForgeRegistries.ITEMS.getKey(itemStack.getItem()),
+                                itemEntity.getX(),
+                                itemEntity.getY(),
+                                itemEntity.getZ()
+                        );
+                        loggedIneligibleItemCount++;
+                    }
+                    continue;
+                }
+
                 detectedItems.add(itemEntity);
 
                 if (detectedItems.size() >= MAX_ITEM_ENTITIES_PER_SCAN)
                 {
                     break playerLoop;
-                }
-
-                ItemStack itemStack = itemEntity.getItem();
-                if (itemStack.isEmpty())
-                {
-                    continue;
                 }
 
                 if (loggedItemCount < MAX_DETECTED_ITEM_LOG_MESSAGES_PER_SCAN)
@@ -117,11 +134,18 @@ public final class ItemEntityDetector
 
                 ItemStack firstStack = firstItemEntity.getItem();
                 ItemStack secondStack = secondItemEntity.getItem();
-                boolean compatible = ItemCompatibilityPolicy.canStack(firstStack, secondStack);
+                ItemEntityEligibilityPolicy.EligibilityResult lifecycleCompatibility =
+                        ItemEntityEligibilityPolicy.checkLifecycleCompatibility(firstItemEntity, secondItemEntity);
+                boolean compatible = lifecycleCompatibility.eligible()
+                        && ItemCompatibilityPolicy.canStack(firstStack, secondStack);
+                String incompatibilityReason = lifecycleCompatibility.eligible()
+                        ? "item stacks differ"
+                        : lifecycleCompatibility.reason();
 
                 LOGGER.info(
-                        "Nearby dropped item pair is {}: first=(id={}, count={}, position=({}, {}, {})), second=(id={}, count={}, position=({}, {}, {}))",
+                        "Nearby dropped item pair is {}: reason={}, first=(id={}, count={}, position=({}, {}, {})), second=(id={}, count={}, position=({}, {}, {}))",
                         compatible ? "compatible" : "incompatible",
+                        compatible ? "eligible" : incompatibilityReason,
                         ForgeRegistries.ITEMS.getKey(firstStack.getItem()),
                         firstStack.getCount(),
                         firstItemEntity.getX(),

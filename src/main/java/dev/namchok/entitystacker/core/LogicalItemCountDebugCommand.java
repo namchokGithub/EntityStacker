@@ -5,6 +5,7 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import dev.namchok.entitystacker.EntityStacker;
 import dev.namchok.entitystacker.config.ItemStackingConfig;
+import dev.namchok.entitystacker.item.service.ItemEntityEligibilityPolicy;
 import dev.namchok.entitystacker.item.service.LogicalItemCountStorage;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -28,7 +29,6 @@ import java.util.List;
 @Mod.EventBusSubscriber(modid = EntityStacker.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class LogicalItemCountDebugCommand
 {
-    private static final String DEBUG_MARKER_KEY = "entitystacker.debug_logical_item_count";
     private static final int DEBUG_LOGICAL_COUNT = 102;
     private static final int DEBUG_VISIBLE_COUNT = 64;
     private static final double DEBUG_SEARCH_RADIUS = 16.0D;
@@ -74,7 +74,7 @@ public final class LogicalItemCountDebugCommand
         boolean itemStackUnchanged = ItemStack.isSameItemSameTags(originalStack, itemEntity.getItem())
                 && originalStack.getCount() == itemEntity.getItem().getCount();
 
-        itemEntity.getPersistentData().putBoolean(DEBUG_MARKER_KEY, true);
+        itemEntity.getPersistentData().putBoolean(ItemEntityEligibilityPolicy.DEBUG_ENTITY_MARKER_KEY, true);
         itemEntity.setNoGravity(true);
         itemEntity.setPickUpDelay(32767);
         boolean spawned = level.addFreshEntity(itemEntity);
@@ -134,7 +134,7 @@ public final class LogicalItemCountDebugCommand
         List<ItemEntity> debugItems = player.serverLevel().getEntitiesOfClass(
                 ItemEntity.class,
                 player.getBoundingBox().inflate(DEBUG_SEARCH_RADIUS),
-                itemEntity -> itemEntity.getPersistentData().getBoolean(DEBUG_MARKER_KEY)
+                itemEntity -> itemEntity.getPersistentData().getBoolean(ItemEntityEligibilityPolicy.DEBUG_ENTITY_MARKER_KEY)
         );
 
         debugItems.forEach(ItemEntity::discard);
@@ -150,7 +150,7 @@ public final class LogicalItemCountDebugCommand
         return player.serverLevel().getEntitiesOfClass(
                 ItemEntity.class,
                 player.getBoundingBox().inflate(DEBUG_SEARCH_RADIUS),
-                itemEntity -> itemEntity.getPersistentData().getBoolean(DEBUG_MARKER_KEY)
+                itemEntity -> itemEntity.getPersistentData().getBoolean(ItemEntityEligibilityPolicy.DEBUG_ENTITY_MARKER_KEY)
         ).stream().findFirst().orElse(null);
     }
 

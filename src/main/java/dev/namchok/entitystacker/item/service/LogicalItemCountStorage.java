@@ -41,6 +41,37 @@ public final class LogicalItemCountStorage
     }
 
     /**
+     * Returns whether this entity either has no stored logical count or has a
+     * stored count that satisfies the logical-count invariant.
+     *
+     * <p>This is deliberately read-only so eligibility checks can reject
+     * corrupt data without changing the entity while it is being inspected.</p>
+     */
+    public static boolean hasValidStoredLogicalCount(final ItemEntity itemEntity)
+    {
+        CompoundTag persistentData = itemEntity.getPersistentData();
+        if (!persistentData.contains(LOGICAL_ITEM_COUNT_KEY))
+        {
+            return true;
+        }
+
+        if (!persistentData.contains(LOGICAL_ITEM_COUNT_KEY, Tag.TAG_INT))
+        {
+            return false;
+        }
+
+        return isValidLogicalCount(
+                persistentData.getInt(LOGICAL_ITEM_COUNT_KEY),
+                itemEntity.getItem().getCount()
+        );
+    }
+
+    static boolean isLogicalCountPersistentDataKey(final String key)
+    {
+        return LOGICAL_ITEM_COUNT_KEY.equals(key);
+    }
+
+    /**
      * Stores a logical count without changing the ItemStack count or its NBT.
      * A count equal to the vanilla count clears the redundant stored value.
      *
