@@ -86,6 +86,36 @@ Mob death and loot decisions:
 - Test save/reload, chunk unload/reload, multiplayer, repeated interactions, and duplicate/loss scenarios before labeling a stacking feature stable.
 - For performance comparisons, use repeatable scenarios and report **MSPT, TPS, entity count, and hardware/test conditions**; do not infer optimization merely from fewer rendered entities.
 
+## Git Commit Message
+
+- Before making any change, present the proposed scope and wait for explicit user approval. This applies even to clear, small, low-risk, or cosmetic changes.
+- Ask before proceeding whenever scope is ambiguous, an action is destructive or irreversible, adds dependencies, changes external services, affects data outside the workspace, or cannot be completed as requested.
+- After completing substantial code changes:
+  - Summarize what changed.
+  - List important files changed.
+  - Mention any remaining concerns or follow-up work.
+  - Suggest a concise Git commit message based on the actual changes.
+  - Use Conventional Commits format when appropriate.
+- Do not suggest a Git commit message for minor changes unless the user explicitly asks.
+- Never run `git commit` unless explicitly requested.
+- Never add AI/agent attribution to commits, tags, pull requests, or release notes (for example `Co-Authored-By: Claude …` or "Generated with …"). GitHub counts co-author trailers as repository contributors, and a pushed trailer cannot be removed without rewriting history.
+- Never run `git push` (branches, tags, or `--force`) or create a GitHub Release. Prepare the commit or tag locally, then hand the user the exact push/release command to run.
+
+### Commit Message Review
+
+Generate a high-quality commit message based only on the relevant Git changes.
+
+1. If staged changes exist (`git diff --cached`), use only staged changes.
+2. If no staged changes exist, use the regular `git diff`.
+3. Never mix staged and unstaged changes.
+4. Use Conventional Commit format.
+5. Include a scope when identifiable, such as `item`, `mob`, `network`, or `config`.
+6. If Jira keys appear in the diff, include them after the scope.
+7. Keep the subject line concise, at most 100 characters.
+8. Focus on user or mod behavior, not syntax noise.
+9. Ignore whitespace-only or formatting-only changes.
+10. Output only one subject line in this format: `type(scope): short summary`.
+
 ## Current next step
 
 Inspect the actual source files and reconcile the Forge example mod identity: `gradle.properties` mod ID, `@Mod` annotation / constant, Java class/package/constructor, `mods.toml`, and any references. Make the smallest coordinated rename needed, then verify with `runClient` and `build`. Ask for clarification before replacing an already customized structure.
