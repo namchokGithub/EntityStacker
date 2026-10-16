@@ -95,7 +95,7 @@ public final class ItemEntityEligibilityPolicy
         }
 
         CompoundTag serializedEntityData = itemEntity.saveWithoutId(new CompoundTag());
-        if (itemEntity.getOwner() != null || serializedEntityData.hasUUID("Owner"))
+        if (serializedEntityData.hasUUID("Owner"))
         {
             return EligibilityResult.ineligible("entity has an ownership restriction");
         }
@@ -105,7 +105,7 @@ public final class ItemEntityEligibilityPolicy
             return EligibilityResult.ineligible("entity has a nonstandard lifespan");
         }
 
-        return EligibilityResult.eligible();
+        return EligibilityResult.allowed();
     }
 
     /**
@@ -129,7 +129,7 @@ public final class ItemEntityEligibilityPolicy
             return EligibilityResult.ineligible("item entity lifespans differ");
         }
 
-        return EligibilityResult.eligible();
+        return EligibilityResult.allowed();
     }
 
     /** Result of a non-mutating eligibility or lifecycle check. */
@@ -137,7 +137,7 @@ public final class ItemEntityEligibilityPolicy
     {
         private static final String ELIGIBLE_REASON = "eligible";
 
-        private static EligibilityResult eligible()
+        private static EligibilityResult allowed()
         {
             return new EligibilityResult(true, ELIGIBLE_REASON);
         }
